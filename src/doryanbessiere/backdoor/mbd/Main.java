@@ -411,7 +411,7 @@ public class Main {
 								}
 								latest_directory.mkdirs();
 
-								FileUtils.copyFileToDirectory(new File(unzip_directory, "target/matchmaking-server.jar"),
+								FileUtils.copyFileToDirectory(new File(unzip_directory, "target/matchmaking.jar"),
 										latest_directory);
 							} else {
 								channel.sendMessage("```[ERROR] Build failed!```").queue();
