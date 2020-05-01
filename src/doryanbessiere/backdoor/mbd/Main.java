@@ -71,15 +71,24 @@ public class Main {
 										.sendMessage("Liste des commandes disponible\n" + "```"
 												+ "- !deletecache - pour supprimer la dernière version construite\n"
 												+ "- !product <snapshot/release> - pour construire le jeu et le serveur\n"
+												+ "- !buildmatchmaking - pour construire le serveur matchmaking\n"
 												+ "- !productserver  <snapshot/release> - pour construire le serveur\n"
 												+ "- !productgame <snapshot/release> - pour construire le jeu\n" + "```" + "\n"
 												+ "Cette fonctionnalité à été développé par Doryan Bessiere\n"
-												+ "https://github.com/DoryanBessiere/")
+												+ "https://github.com/BDoryan/")
 										.complete();
 							} else if (args[0].equalsIgnoreCase("!deletecache")) {
 								clearCache();
 								e.getTextChannel().sendMessage("Le dossier cache à été vidé :D").complete();
+							} else if (args[0].equalsIgnoreCase("!buildmatchmaking")) {
+								clearCache();
+								e.getTextChannel()
+								.sendMessage(new MessageBuilder()
+										.append("Construction du serveur matchmaking").build())
+								.complete();
+								buildMatchmaking(jda, sql_database, logs_channel);
 							} else if (args[0].equalsIgnoreCase("!product")) {
+								clearCache();
 								clear(logs_channel);
 								if(args.length != 2) {
 									e.getTextChannel()
@@ -103,6 +112,7 @@ public class Main {
 									buildRelease(jda, sql_database, logs_channel);	
 								}
 							} else if (args[0].equalsIgnoreCase("!productserver")) {
+								clearCache();
 								clear(logs_channel);
 
 								if(args.length != 2) {
@@ -127,6 +137,7 @@ public class Main {
 									buildReleaseServer(jda, sql_database, logs_channel);	
 								}
 							} else if (args[0].equalsIgnoreCase("!productgame")) {
+								clearCache();
 								clear(logs_channel);
 								if(args.length != 2) {
 									e.getTextChannel()
@@ -179,7 +190,7 @@ public class Main {
 	}
 
 	private static void buildReleaseServer(JDA jda, SQLDatabase sql_database, TextChannel channel) {
-		GithubAPI githubAPI = new GithubAPI("DoryanBessiere", "9f7278b2e845d3d4e6197dce52f7060b3491546c");
+		GithubAPI githubAPI = new GithubAPI("BDoryan", "9f7278b2e845d3d4e6197dce52f7060b3491546c");
 		try {
 			githubAPI.download(GithubAPI.getCacheDirectory(), "BackdoorServer", new DownloadInfo() {
 				@Override
@@ -262,7 +273,7 @@ public class Main {
 	}
 
 	private static void buildSnapshotServer(JDA jda, SQLDatabase sql_database, TextChannel channel) {
-		GithubAPI githubAPI = new GithubAPI("DoryanBessiere", "9f7278b2e845d3d4e6197dce52f7060b3491546c");
+		GithubAPI githubAPI = new GithubAPI("BDoryan", "9f7278b2e845d3d4e6197dce52f7060b3491546c");
 		try {
 			githubAPI.download(GithubAPI.getCacheDirectory(), "BackdoorServer", "snapshot", new DownloadInfo() {
 				@Override
@@ -344,8 +355,92 @@ public class Main {
 		}
 	}
 
+
+	private static void buildMatchmaking(JDA jda, SQLDatabase sql_database, TextChannel channel) {
+		GithubAPI githubAPI = new GithubAPI("BDoryan", "9f7278b2e845d3d4e6197dce52f7060b3491546c");
+		try {
+			githubAPI.download(GithubAPI.getCacheDirectory(), "BackdoorMatchmaking", new DownloadInfo() {
+				@Override
+				public void start() {
+					channel.sendMessage("```[INFO] Downloading the Matchmaking Server project...```").queue();
+				}
+
+				@Override
+				public void finish() {
+					channel.sendMessage("```[INFO] Downloading finish```").queue();
+					channel.sendMessage("```[INFO] Decompressing the project archive...```").queue();
+					try {
+						File unzip_directory = githubAPI.unzip(getFile());
+						channel.sendMessage("```[INFO] Decompressing finish```").queue();
+
+						channel.sendMessage("```[INFO] Building projects...```").queue();
+						MavenBuilderAPI build = new MavenBuilderAPI(unzip_directory);
+						try {
+							File mavenlogs_file = new File(GithubAPI.localDirectory(), "maven-logs.log");
+							if (mavenlogs_file.exists()) {
+								mavenlogs_file.delete();
+							}
+							mavenlogs_file.createNewFile();
+							FileWriter mavenlogs_writer = new FileWriter(mavenlogs_file);
+							if (build.build(new MavenLogs() {
+
+								@Override
+								public void log(String log) {
+									try {
+										mavenlogs_writer.write(log + "\n");
+									} catch (IOException e) {
+										e.printStackTrace();
+									}
+								}
+
+								@Override
+								public void error(String log) {
+									try {
+										mavenlogs_writer.write(log + "\n");
+									} catch (IOException e) {
+										e.printStackTrace();
+									}
+								}
+							}, "-s", "/home/backdoor/settings.xml", "install", "-U")) {
+								channel.sendMessage("```[INFO] Build success :D```").queue();
+
+								File latest_directory = new File("/home/resources/matchmaking");
+
+								if (latest_directory.exists()) {
+									FileUtils.deleteDirectory(latest_directory);
+								}
+								latest_directory.mkdirs();
+
+								FileUtils.copyFileToDirectory(new File(unzip_directory, "target/matchmaking-server.jar"),
+										latest_directory);
+							} else {
+								channel.sendMessage("```[ERROR] Build failed!```").queue();
+							}
+							mavenlogs_writer.close();
+							channel.sendFile(mavenlogs_file,
+									new MessageBuilder().append("```" + mavenlogs_file.getName() + "```").build())
+									.queue();
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+					} catch (FileNotFoundException e) {
+						e.printStackTrace();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+
+				@Override
+				public void download() {
+				}
+			});
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
 	private static void buildReleaseGame(JDA jda, SQLDatabase sql_database, TextChannel channel) {
-		GithubAPI githubAPI = new GithubAPI("DoryanBessiere", "9f7278b2e845d3d4e6197dce52f7060b3491546c");
+		GithubAPI githubAPI = new GithubAPI("BDoryan", "9f7278b2e845d3d4e6197dce52f7060b3491546c");
 		try {
 			githubAPI.download(GithubAPI.getCacheDirectory(), "BackdoorGame", new DownloadInfo() {
 				@Override
@@ -476,7 +571,7 @@ public class Main {
 									}
 
 									try {
-										sql_database.setString("release", "name", "backdoor", "version", GAME_VERSION);
+										sql_database.setString("releases", "name", "backdoor", "version", GAME_VERSION);
 										sql_database.disconnect();
 										channel.sendMessage(
 												"```[INFO] The production of the game is done successfully, the game has a new update ("
@@ -515,7 +610,7 @@ public class Main {
 	}
 
 	private static void buildSnapshotGame(JDA jda, SQLDatabase sql_database, TextChannel channel) {
-		GithubAPI githubAPI = new GithubAPI("DoryanBessiere", "9f7278b2e845d3d4e6197dce52f7060b3491546c");
+		GithubAPI githubAPI = new GithubAPI("BDoryan", "9f7278b2e845d3d4e6197dce52f7060b3491546c");
 		try {
 			githubAPI.download(GithubAPI.getCacheDirectory(), "BackdoorGame", "snapshot", new DownloadInfo() {
 				@Override
@@ -563,7 +658,7 @@ public class Main {
 									"-Plwjgl-natives-linux-aarch64", "-Plwjgl-natives-linux-arm",
 									"-Plwjgl-natives-linux-arm32", "-Plwjgl-natives-macos-amd64",
 									"-Plwjgl-natives-windows-x86", "-Plwjgl-natives-windows-amd64", "package",
-									"compile", "-U", "-s",  "/home/backdoor/settings.xml")) {
+									"compile", "-U", "-s", "/home/backdoor/settings.xml")) {
 								channel.sendMessage("```[INFO] Build success :D```").queue();
 
 								File latest_directory = new File("/var/www/html/games/backdoor/snapshot/latest/");
@@ -646,7 +741,7 @@ public class Main {
 									}
 
 									try {
-										sql_database.setString("snapshot", "name", "backdoor", "version", GAME_VERSION);
+										sql_database.setString("snapshots", "name", "backdoor", "version", GAME_VERSION);
 										sql_database.disconnect();
 										channel.sendMessage(
 												"```[INFO] The production of the game is done successfully, the game has a new update ("
