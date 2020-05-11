@@ -1,4 +1,4 @@
-package doryanbessiere.backdoor.mbd;
+package doryanbessiere.discord.backbot;
 
 import java.awt.Color;
 import java.io.BufferedReader;
@@ -48,14 +48,14 @@ public class Main {
 
 	public static void main(String[] args) {
 		SQLDatabase sql_database = new SQLDatabase(SQL.DEFAULT_SQL_DRIVER, SQL.DEFAULT_URLBASE, "localhost",
-				"isotopestudio", "isoadmin", "45J6*k}nA");
+				"isotopestudio", "", "");
 		if (!sql_database.connect()) {
 			System.err.println("Database connection failed!");
 		}
 
 		try {
 			JDA jda = new JDABuilder(AccountType.BOT)
-					.setToken("NzAwODE4MTU0MTM3NDUyNTY0.XpoqkA.mxYAk51ELkDcK6dvgkJfh3sLzco").buildAsync();
+					.setToken("").buildAsync();
 			jda.addEventListener(new EventListener() {
 				@Override
 				public void onEvent(Event event) {
@@ -87,6 +87,10 @@ public class Main {
 										.append("Construction du serveur matchmaking").build())
 								.complete();
 								buildMatchmaking(jda, sql_database, logs_channel);
+								e.getTextChannel()
+								.sendMessage(new MessageBuilder()
+										.append("Construction terminée!").build())
+								.complete();
 							} else if (args[0].equalsIgnoreCase("!product")) {
 								clearCache();
 								clear(logs_channel);
@@ -104,12 +108,20 @@ public class Main {
 													.append("Construction du jeu et du server en cours [snapshot version]").build())
 											.complete();
 									buildSnapshot(jda, sql_database, logs_channel);
+									e.getTextChannel()
+									.sendMessage(new MessageBuilder()
+											.append("Construction terminée!").build())
+									.complete();
 								} else if (args[1].equalsIgnoreCase("release")) {
 									e.getTextChannel()
 											.sendMessage(new MessageBuilder()
 													.append("Construction du jeu et du server en cours [release version]").build())
 											.complete();
 									buildRelease(jda, sql_database, logs_channel);	
+									e.getTextChannel()
+									.sendMessage(new MessageBuilder()
+											.append("Construction terminée!").build())
+									.complete();
 								}
 							} else if (args[0].equalsIgnoreCase("!productserver")) {
 								clearCache();
@@ -129,12 +141,20 @@ public class Main {
 													.append("Construction du server en cours [snapshot version]").build())
 											.complete();
 									buildSnapshotServer(jda, sql_database, logs_channel);
+									e.getTextChannel()
+									.sendMessage(new MessageBuilder()
+											.append("Construction terminée!").build())
+									.complete();
 								} else if (args[1].equalsIgnoreCase("release")) {
 									e.getTextChannel()
 											.sendMessage(new MessageBuilder()
 													.append("Construction du server en cours [release version]").build())
 											.complete();
 									buildReleaseServer(jda, sql_database, logs_channel);	
+									e.getTextChannel()
+									.sendMessage(new MessageBuilder()
+											.append("Construction terminée!").build())
+									.complete();
 								}
 							} else if (args[0].equalsIgnoreCase("!productgame")) {
 								clearCache();
@@ -153,12 +173,20 @@ public class Main {
 													.append("Construction du jeu en cours [snapshot version]").build())
 											.complete();
 									buildSnapshotGame(jda, sql_database, logs_channel);
+									e.getTextChannel()
+									.sendMessage(new MessageBuilder()
+											.append("Construction terminée!").build())
+									.complete();
 								} else if (args[1].equalsIgnoreCase("release")) {
 									e.getTextChannel()
 											.sendMessage(new MessageBuilder()
 													.append("Construction du jeu en cours [release version]").build())
 											.complete();
 									buildReleaseGame(jda, sql_database, logs_channel);	
+									e.getTextChannel()
+									.sendMessage(new MessageBuilder()
+											.append("Construction terminée!").build())
+									.complete();
 								}
 							} else {
 								e.getTextChannel().sendMessage("Cette commande n'existe pas, !help").complete();
@@ -190,7 +218,7 @@ public class Main {
 	}
 
 	private static void buildReleaseServer(JDA jda, SQLDatabase sql_database, TextChannel channel) {
-		GithubAPI githubAPI = new GithubAPI("BDoryan", "9f7278b2e845d3d4e6197dce52f7060b3491546c");
+		GithubAPI githubAPI = new GithubAPI("BDoryan", "");
 		try {
 			githubAPI.download(GithubAPI.getCacheDirectory(), "BackdoorServer", new DownloadInfo() {
 				@Override
@@ -273,7 +301,7 @@ public class Main {
 	}
 
 	private static void buildSnapshotServer(JDA jda, SQLDatabase sql_database, TextChannel channel) {
-		GithubAPI githubAPI = new GithubAPI("BDoryan", "9f7278b2e845d3d4e6197dce52f7060b3491546c");
+		GithubAPI githubAPI = new GithubAPI("BDoryan", "");
 		try {
 			githubAPI.download(GithubAPI.getCacheDirectory(), "BackdoorServer", "snapshot", new DownloadInfo() {
 				@Override
@@ -357,7 +385,7 @@ public class Main {
 
 
 	private static void buildMatchmaking(JDA jda, SQLDatabase sql_database, TextChannel channel) {
-		GithubAPI githubAPI = new GithubAPI("BDoryan", "9f7278b2e845d3d4e6197dce52f7060b3491546c");
+		GithubAPI githubAPI = new GithubAPI("BDoryan", "");
 		try {
 			githubAPI.download(GithubAPI.getCacheDirectory(), "BackdoorMatchmaking", new DownloadInfo() {
 				@Override
@@ -440,7 +468,7 @@ public class Main {
 	}
 
 	private static void buildReleaseGame(JDA jda, SQLDatabase sql_database, TextChannel channel) {
-		GithubAPI githubAPI = new GithubAPI("BDoryan", "9f7278b2e845d3d4e6197dce52f7060b3491546c");
+		GithubAPI githubAPI = new GithubAPI("BDoryan", "");
 		try {
 			githubAPI.download(GithubAPI.getCacheDirectory(), "BackdoorGame", new DownloadInfo() {
 				@Override
@@ -503,6 +531,8 @@ public class Main {
 								FileUtils.copyDirectoryToDirectory(new File(unzip_directory, "target/datapacks"),
 										latest_directory);
 								FileUtils.copyDirectoryToDirectory(new File(unzip_directory, "target/langs"),
+										latest_directory);
+								FileUtils.copyDirectoryToDirectory(new File(unzip_directory, "target/datas"),
 										latest_directory);
 								FileUtils.copyFileToDirectory(new File(unzip_directory, "target/changelogs.log"),
 										latest_directory);
@@ -610,7 +640,7 @@ public class Main {
 	}
 
 	private static void buildSnapshotGame(JDA jda, SQLDatabase sql_database, TextChannel channel) {
-		GithubAPI githubAPI = new GithubAPI("BDoryan", "9f7278b2e845d3d4e6197dce52f7060b3491546c");
+		GithubAPI githubAPI = new GithubAPI("BDoryan", "");
 		try {
 			githubAPI.download(GithubAPI.getCacheDirectory(), "BackdoorGame", "snapshot", new DownloadInfo() {
 				@Override
@@ -673,6 +703,8 @@ public class Main {
 								FileUtils.copyDirectoryToDirectory(new File(unzip_directory, "target/datapacks"),
 										latest_directory);
 								FileUtils.copyDirectoryToDirectory(new File(unzip_directory, "target/langs"),
+										latest_directory);
+								FileUtils.copyDirectoryToDirectory(new File(unzip_directory, "target/datas"),
 										latest_directory);
 								FileUtils.copyFileToDirectory(new File(unzip_directory, "target/changelogs.log"),
 										latest_directory);

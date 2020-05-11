@@ -2,8 +2,8 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>doryanbessiere.backdoor.mbd</groupId>
-	<artifactId>BackdoorGameMBD</artifactId>
+	<groupId>doryanbessiere.discord.backbot</groupId>
+	<artifactId>BackBot</artifactId>
 	<version>1.0.0</version>
 	<build>
 		<sourceDirectory>src</sourceDirectory>
@@ -12,7 +12,7 @@
 				<artifactId>maven-assembly-plugin</artifactId>
 				<version>3.2.0</version>
 				<configuration>
-					<finalName>BackdoorMBD</finalName>
+					<finalName>backbot</finalName>
 					<appendAssemblyId>false</appendAssemblyId>
 					<descriptorRefs>
 						<descriptorRef>jar-with-dependencies</descriptorRef>
@@ -20,14 +20,14 @@
 					<archive>
 						<manifest>
 							<addClasspath>true</addClasspath>
-							<mainClass>doryanbessiere.backdoor.mbd.Main</mainClass>
+							<mainClass>doryanbessiere.discord.backbot.Backbot</mainClass>
 						</manifest>
 					</archive>
 				</configuration>
 				<executions>
 					<execution>
-						<id>make-assembly</id> <!-- this is used for inheritance merges -->
-						<phase>package</phase> <!-- bind to the packaging phase -->
+						<id>make-assembly</id>
+						<phase>package</phase>
 						<goals>
 							<goal>single</goal>
 						</goals>
@@ -70,7 +70,7 @@
 		<dependency>
 			<groupId>doryanbessiere.isotopestudio.api</groupId>
 			<artifactId>isotopestudioapi</artifactId>
-			<version>1.0.9</version>
+			<version>1.1.0</version>
 		</dependency>
 		<!-- Local repository -->
 		<dependency>
