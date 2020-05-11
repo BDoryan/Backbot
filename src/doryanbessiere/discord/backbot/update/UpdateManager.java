@@ -78,7 +78,7 @@ public class UpdateManager {
 
 				try {
 					MavenXpp3Reader reader = new MavenXpp3Reader();
-					Model model = reader.read(new FileInputStream(unzip_directory));
+					Model model = reader.read(new FileInputStream(new File(unzip_directory, "pom.xml")));
 					version = model.getVersion();
 
 					if (build.build(new MavenLogs() {
