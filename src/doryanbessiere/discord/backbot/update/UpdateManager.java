@@ -34,7 +34,7 @@ import net.dv8tion.jda.core.entities.TextChannel;
  */
 public class UpdateManager {
 
-	public boolean updateGame(VersionType versionType) {
+	public static boolean updateGame(VersionType versionType) {
 		TextChannel channel = Backbot.getDiscordbot().getTextChannel();
 		GithubAPI githubAPI = new GithubAPI(Backbot.getConfig().getProperty("github.username"),
 				Backbot.getConfig().getProperty("github.token"));
@@ -181,7 +181,7 @@ public class UpdateManager {
 		return false;
 	}
 
-	private List<String> search(File parent, File directory) {
+	private static List<String> search(File parent, File directory) {
 		List<String> files = Arrays.asList();
 		for (File file : directory.listFiles()) {
 			if (file.isFile()) {

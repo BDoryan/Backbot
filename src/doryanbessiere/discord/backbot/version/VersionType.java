@@ -30,4 +30,16 @@ public enum VersionType {
 	public String getTableSQL() {
 		return table_sql;
 	}
+
+	/**
+	 * @param string
+	 * @return
+	 */
+	public static VersionType from(String name) {
+		for(VersionType versionType : VersionType.values()) {
+			if(versionType.getName().equals(name))
+				return versionType;
+		}
+		return null;
+	}
 }

@@ -8,6 +8,8 @@ import java.util.Map.Entry;
 
 import doryanbessiere.discord.backbot.Backbot;
 import doryanbessiere.discord.backbot.discord.command.ICommand;
+import doryanbessiere.discord.backbot.update.UpdateManager;
+import doryanbessiere.discord.backbot.version.VersionType;
 import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.entities.TextChannel;
 
@@ -22,8 +24,22 @@ public class UpdateGameCommand implements ICommand {
 		TextChannel channel = Backbot.getDiscordbot().getTextChannel();
 		if(args.length == 0) {
 			channel.sendMessage("Lancement de la mise à jour en cours...").queue();
-			channel.sendMessage("Mise à jour terminé!").queue();
-		} else {
+			if(UpdateManager.updateGame(VersionType.RELEASE)){
+				channel.sendMessage("Mise à jour terminé!").queue();	
+			} else {
+				channel.sendMessage("La mise à jour à échoué!").queue();
+			}
+		} else if(args.length == 1){
+			VersionType versionType = VersionType.from(args[1]);
+			if(versionType == null) {
+				System.err.println("Cette version est inconnue!");
+				return;
+			}
+			if(UpdateManager.updateGame(VersionType.RELEASE)){
+				channel.sendMessage("Mise à jour terminé!").queue();	
+			} else {
+				channel.sendMessage("La mise à jour à échoué!").queue();
+			}
 		}
 	}
 
