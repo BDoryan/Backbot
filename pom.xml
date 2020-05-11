@@ -47,17 +47,17 @@
 
 	<repositories>
 		<repository>
+			<id>github</id>
+			<name>GitHub OWNER Apache Maven Packages</name>
+			<url>https://maven.pkg.github.com/BDoryan/IsotopeStudioRepository</url>
+		</repository>
+		<repository>
 			<snapshots>
 				<enabled>false</enabled>
 			</snapshots>
 			<id>jcenter</id>
 			<name>jcenter-bintray</name>
 			<url>https://jcenter.bintray.com</url>
-		</repository>
-		<repository>
-			<id>github</id>
-			<name>GitHub OWNER Apache Maven Packages</name>
-			<url>https://maven.pkg.github.com/BDoryan/IsotopeStudioRepository</url>
 		</repository>
 	</repositories>
 	
