@@ -1,16 +1,9 @@
 package doryanbessiere.discord.backbot.discord.command.commands;
 
-import java.awt.Color;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Locale;
-import java.util.Map.Entry;
-
 import doryanbessiere.discord.backbot.Backbot;
 import doryanbessiere.discord.backbot.discord.command.ICommand;
 import doryanbessiere.discord.backbot.update.UpdateManager;
 import doryanbessiere.discord.backbot.version.VersionType;
-import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.entities.TextChannel;
 
 /**
@@ -30,7 +23,7 @@ public class UpdateGameCommand implements ICommand {
 				channel.sendMessage("La mise à jour à échoué!").queue();
 			}
 		} else if(args.length == 1){
-			VersionType versionType = VersionType.from(args[1]);
+			VersionType versionType = VersionType.from(args[0]);
 			if(versionType == null) {
 				System.err.println("Cette version est inconnue!");
 				return;
