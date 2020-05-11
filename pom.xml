@@ -54,8 +54,13 @@
 			<name>jcenter-bintray</name>
 			<url>https://jcenter.bintray.com</url>
 		</repository>
+		<repository>
+			<id>github</id>
+			<name>GitHub OWNER Apache Maven Packages</name>
+			<url>https://maven.pkg.github.com/BDoryan/IsotopeStudioRepository</url>
+		</repository>
 	</repositories>
-
+	
 	<dependencies>
 		<dependency>
 			<groupId>net.dv8tion</groupId>

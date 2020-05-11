@@ -107,7 +107,7 @@ public class Backbot {
 	public static File updateDirectory() {
 		return new File(localDirectory(), "backdoor-update");
 	}
-	
+
 	public static File localDirectory() {
 		return LocalDirectory.toFile(Backbot.class);
 	}
