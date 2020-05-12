@@ -6,7 +6,7 @@ package doryanbessiere.discord.backbot.version;
  */
 public enum VersionType {
 
-	SNAPSHOT("snapshot", "releases"),
+	SNAPSHOT("snapshot", "snapshots"),
 	RELEASE("release", "releases");
 	
 	private String name;

@@ -29,7 +29,7 @@ import doryan.mbd.download.DownloadInfo;
 import doryan.mbd.github.GithubAPI;
 import doryanbessiere.discord.backbot.Backbot;
 import doryanbessiere.discord.backbot.version.VersionType;
-import doryanbessiere.isotopestudio.api.updater.FilesUpdate;
+import doryanbessiere.isotopestudio.api.updater.FileFilesUpdate;
 import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.MessageBuilder;
 import net.dv8tion.jda.core.entities.TextChannel;
@@ -48,15 +48,9 @@ public class UpdateManager {
 			} catch (IOException e1) {
 				e1.printStackTrace();
 			}
-		
+
 		GithubAPI githubAPI = new GithubAPI(Backbot.getConfig().getProperty("github.username"),
-				Backbot.getConfig().getProperty("github.token")) {
-			@Override
-			public boolean download(File destination, String project, String branch, DownloadInfo downloadInfo)
-					throws IOException {
-				return super.download(destination, project, branch, downloadInfo);
-			}
-		};
+				Backbot.getConfig().getProperty("github.token"));
 		try {
 			DownloadInfo download_info = new DownloadInfo() {
 				@Override
@@ -90,9 +84,6 @@ public class UpdateManager {
 			String[] arguments = Backbot.getConfig().getProperty("mavenbuildapi.game.arguments").split(",");
 
 			try {
-				File latest_directory = new File(
-						Backbot.getConfig().getProperty("update.latest." + versionType.getName()));
-
 				String version = null;
 
 				try {
@@ -120,6 +111,9 @@ public class UpdateManager {
 							}
 						}
 					}, arguments)) {
+						File latest_directory = new File(
+								Backbot.getConfig().getProperty("update.latest." + versionType.getName()));
+						
 						channel.sendMessage("```[INFO] Build success !```").queue();
 
 						channel.sendMessage("```[INFO] Recovery of current game files !```").queue();
@@ -146,10 +140,13 @@ public class UpdateManager {
 						ArrayList<String> update_logs = new ArrayList<>();
 
 						File files_update_file = new File(latest_directory.getParent(), "files.update");
-						FilesUpdate filesUpdate = null;
+						FileFilesUpdate fileFilesUpdate = null;
+						
 						if (files_update_file.exists()) {
-							filesUpdate = new FilesUpdate(new FileInputStream(files_update_file), new FileOutputStream(files_update_file));
-							if (!filesUpdate.read()) {
+							System.out.println(files_update_file.getPath()+"="+files_update_file.length());
+							fileFilesUpdate = new FileFilesUpdate(files_update_file);
+
+							if (!fileFilesUpdate.read()) {
 								channel.sendMessage("```[ERROR] files.update cannot be read!```").queue();
 								return false;
 							}
@@ -159,12 +156,12 @@ public class UpdateManager {
 
 							for (String file : last_version_files) {
 								if (!new_version_files.contains(file)) {
-									filesUpdate.removeFile(file);
+									fileFilesUpdate.removeFile(file);
 									update_logs.add(file + " has been removed.");
 								} else {
 									if (!FileUtils.contentEquals(new File(latest_directory, file),
 											new File(game_content_directory, file))) {
-										filesUpdate.setFile(file, version);
+										fileFilesUpdate.setFile(file, version);
 										update_logs.add(file + " has been changed.");
 									}
 								}
@@ -172,31 +169,41 @@ public class UpdateManager {
 
 							for (String file : new_version_files) {
 								if (!last_version_files.contains(file)) {
-									filesUpdate.addFile(file, version);
+									fileFilesUpdate.addFile(file, version);
 									update_logs.add(file + " has been added.");
 								}
 							}
-							if (!filesUpdate.save()) {
+							
+							if (files_update_file.exists())
+								files_update_file.delete();
+							files_update_file.createNewFile();
+							
+							if (!fileFilesUpdate.save()) {
 								channel.sendMessage("```[ERROR] files.update cannot be saved!```").queue();
 								return false;
 							}
 						} else {
-							files_update_file.createNewFile();
-							filesUpdate = new FilesUpdate(new FileInputStream(files_update_file), new FileOutputStream(files_update_file));
+							fileFilesUpdate = new FileFilesUpdate(files_update_file);
 
 							List<String> new_version_files = search(game_content_directory, game_content_directory);
 							for (String file : new_version_files) {
-								filesUpdate.addFile(file, version);
+								fileFilesUpdate.addFile(file, version);
 								update_logs.add(file + " has been implemented!");
 							}
-							if (!filesUpdate.save()) {
+
+							if (!fileFilesUpdate.save()) {
 								channel.sendMessage("```[ERROR] files.update cannot be saved!```").queue();
 								return false;
 							}
 						}
 
 						update_logs_writer.write("\n");
-						update_logs_writer.write("## Files ##\n");
+						update_logs_writer.write("## Files update ##\n");
+						for (Entry<String, String> entries : fileFilesUpdate.getFiles().entrySet()) {
+							update_logs_writer.write(entries.getKey() + "=" + entries.getValue() + "\n");
+						}
+						update_logs_writer.write("\n");
+						update_logs_writer.write("## Update Logs ##\n");
 						for (String log : update_logs) {
 							update_logs_writer.write(log + "\n");
 						}
@@ -216,7 +223,7 @@ public class UpdateManager {
 						FileUtils.copyDirectoryToDirectory(new File(game_content_directory, "datas"), latest_directory);
 						FileUtils.copyFileToDirectory(new File(game_content_directory, "changelogs.log"),
 								latest_directory);
-
+						
 						File changelogs_file = new File(game_content_directory, "changelogs.log");
 						HashMap<String, ArrayList<String>> logs = null;
 						if (changelogs_file.length() != 0) {
@@ -241,9 +248,10 @@ public class UpdateManager {
 								channel.sendMessage("```" + changelogs_file.getParent() + " not found```").queue();
 							}
 						}
-						
+
 						if (logs != null) {
-							TextChannel changelogs_channel = Backbot.getDiscordbot().getJDA().getTextChannelById(662833381280710689L);
+							TextChannel changelogs_channel = Backbot.getDiscordbot().getJDA()
+									.getTextChannelById(662833381280710689L);
 
 							EmbedBuilder eb = new EmbedBuilder();
 							eb.setColor(new Color(0x353535));
