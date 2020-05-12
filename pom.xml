@@ -79,7 +79,7 @@
 		<dependency>
 			<groupId>doryanbessiere.isotopestudio.api</groupId>
 			<artifactId>isotopestudioapi</artifactId>
-			<version>1.1.0</version>
+			<version>1.1.11</version>
 		</dependency>
 		<!-- Local repository -->
 		<dependency>

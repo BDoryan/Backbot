@@ -16,7 +16,7 @@ public class UpdateGameCommand implements ICommand {
 	public void handle(String[] args) {
 		TextChannel channel = Backbot.getDiscordbot().getTextChannel();
 		if(args.length == 0) {
-			channel.sendMessage("Lancement de la mise à jour en cours...").queue();
+			channel.sendMessage("Lancement de la mise à jour ("+VersionType.RELEASE+", par défaut) en cours...").queue();
 			if(UpdateManager.updateGame(VersionType.RELEASE)){
 				channel.sendMessage("Mise à jour terminé!").queue();	
 			} else {
@@ -28,7 +28,8 @@ public class UpdateGameCommand implements ICommand {
 				System.err.println("Cette version est inconnue!");
 				return;
 			}
-			if(UpdateManager.updateGame(VersionType.RELEASE)){
+			channel.sendMessage("Lancement de la mise à jour ("+versionType.getName()+") en cours...").queue();
+			if(UpdateManager.updateGame(versionType)){
 				channel.sendMessage("Mise à jour terminé!").queue();	
 			} else {
 				channel.sendMessage("La mise à jour à échoué!").queue();

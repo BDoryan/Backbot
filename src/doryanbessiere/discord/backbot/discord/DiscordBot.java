@@ -36,6 +36,7 @@ public class DiscordBot {
 						return;
 					if (e.getTextChannel().getIdLong() == channel) {
 						String message = e.getMessage().getContent();
+						if(!message.startsWith("!"))return;
 						if(!ICommand.command(message)) {
 							e.getTextChannel().sendMessage("Cette commande est inconnue!").complete();
 						}

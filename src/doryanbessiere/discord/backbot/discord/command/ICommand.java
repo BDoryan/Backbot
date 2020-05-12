@@ -22,7 +22,7 @@ public interface ICommand {
 
 	public static boolean command(String line) {
 		String[] args = line.split(" ");
-		String target = args[0];
+		String target = args[0].substring(1);
 
 		for (ICommand command : commands) {
 			if (command.getCommand().equalsIgnoreCase(target)) {

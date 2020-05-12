@@ -37,7 +37,7 @@ public enum VersionType {
 	 */
 	public static VersionType from(String name) {
 		for(VersionType versionType : VersionType.values()) {
-			if(versionType.getName().equals(name))
+			if(versionType.getName().equalsIgnoreCase(name))
 				return versionType;
 		}
 		return null;
