@@ -12,6 +12,7 @@ import doryanbessiere.discord.backbot.discord.DiscordBot;
 import doryanbessiere.isotopestudio.api.IsotopeStudioAPI;
 import doryanbessiere.isotopestudio.api.mysql.SQL;
 import doryanbessiere.isotopestudio.api.mysql.SQLDatabase;
+import doryanbessiere.isotopestudio.api.mysql.SQLDatabase;
 import doryanbessiere.isotopestudio.commons.LocalDirectory;
 import net.dv8tion.jda.core.exceptions.RateLimitedException;
 
@@ -23,7 +24,8 @@ public class Backbot {
 	
 	private static Properties config = new Properties();
 	private static DiscordBot discordbot;
-	private static SQLDatabase database;
+	private static SQLDatabase isotopestudio;
+	private static SQLDatabase backdoor;
 	
 	public static void main(String[] args) {
 		File config_file = new File(localDirectory(), "config.properties");
@@ -67,13 +69,15 @@ public class Backbot {
 				return;
 			}
 
-			database = new SQLDatabase(SQL.DEFAULT_SQL_DRIVER, SQL.DEFAULT_URLBASE, config.getProperty("mysql.url"),
-					config.getProperty("mysql.database"),config.getProperty("mysql.username"),config.getProperty("mysql.password"));
-			
-			if(database.connect()) {
-				discordbot.sendMessage("*YEAAAHHHHH, je suis connecté à la base de donnée :sunglasses:*");
+			isotopestudio = new SQLDatabase(SQL.DEFAULT_SQL_DRIVER, SQL.DEFAULT_URLBASE, config.getProperty("mysql.url"),
+					config.getProperty("mysql.isotopestudio.database"),config.getProperty("mysql.username"),config.getProperty("mysql.password"));
+			backdoor = new SQLDatabase(SQL.DEFAULT_SQL_DRIVER, SQL.DEFAULT_URLBASE, config.getProperty("mysql.url"),
+					config.getProperty("mysql.backdoor.database"),config.getProperty("mysql.username"),config.getProperty("mysql.password"));
+
+			if(isotopestudio.connect() && backdoor.connect()) {
+				discordbot.sendMessage("*YEAAAHHHHH, je suis connecté aux bases de données :sunglasses:*");
 			} else {
-				discordbot.sendMessage("*FUCKKKKKKKKK, j'arrive pas à me connecté à la base de donnée! :middle_finger:*");
+				discordbot.sendMessage("*FUCKKKKKKKKK, j'arrive pas à me connecté aux bases de données! :middle_finger:*");
 			}
 		} else {
 			System.err.println("BackdoorMBD cannot be started, "+config_file.getPath()+" not found!");
@@ -95,10 +99,17 @@ public class Backbot {
 	}
 	
 	/**
-	 * @return the database
+	 * @return the isotopestudio database
 	 */
-	public static SQLDatabase getDatabase() {
-		return database;
+	public static SQLDatabase getIsotopeStudioDatabase() {
+		return isotopestudio;
+	}
+	
+	/**
+	 * @return the backdoor database
+	 */
+	public static SQLDatabase getBackdoorDatabase() {
+		return backdoor;
 	}
 	
 	/**

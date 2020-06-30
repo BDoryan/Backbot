@@ -15,36 +15,74 @@ public class UpdateGameCommand implements ICommand {
 	@Override
 	public void handle(String[] args) {
 		TextChannel channel = Backbot.getDiscordbot().getTextChannel();
-		if(args.length == 0) {
-			channel.sendMessage("Lancement de la mise � jour ("+VersionType.RELEASE+", par d�faut) en cours...").queue();
-			if(UpdateManager.updateGame(VersionType.RELEASE)){
-				channel.sendMessage("Mise � jour termin�!").queue();	
+		if (args.length == 0) {
+			channel.sendMessage("Lancement de la mise à jour du jeu (" + VersionType.RELEASE + ", par défaut) en cours...")
+					.queue();
+			if (UpdateManager.updateGame(VersionType.RELEASE, true)) {
+				channel.sendMessage("Mise à jour terminé!").queue();
 			} else {
-				channel.sendMessage("La mise � jour � �chou�!").queue();
+				channel.sendMessage("La mise à jour à échoué!").queue();
 			}
-		} else if(args.length == 1){
+			channel.sendMessage("Lancement de la mise à jour du serveur (" + VersionType.RELEASE + ", par défaut) en cours...")
+					.queue();
+			if (UpdateManager.updateServer(VersionType.RELEASE, true)) {
+				channel.sendMessage("Mise à jour terminé!").queue();
+			} else {
+				channel.sendMessage("La mise à jour à échoué!").queue();
+			}
+		} else if (args.length == 1) {
 			VersionType versionType = VersionType.from(args[0]);
-			if(versionType == null) {
+			if (versionType == null) {
 				System.err.println("Cette version est inconnue!");
 				return;
 			}
-			channel.sendMessage("Lancement de la mise � jour ("+versionType.getName()+") en cours...").queue();
-			if(UpdateManager.updateGame(versionType)){
-				channel.sendMessage("Mise � jour termin�!").queue();	
+			channel.sendMessage("Lancement de la mise à jour du jeu (" + versionType.getName() + ") en cours...")
+					.queue();
+			if (UpdateManager.updateGame(versionType, true)) {
+				channel.sendMessage("Mise à jour terminé!").queue();
 			} else {
-				channel.sendMessage("La mise � jour � �chou�!").queue();
+				channel.sendMessage("La mise à jour à échoué!").queue();
+			}
+			channel.sendMessage("Lancement de la mise à jour du serveur (" + versionType.getName() + ") en cours...")
+					.queue();
+			if (UpdateManager.updateServer(versionType, true)) {
+				channel.sendMessage("Mise à jour terminé!").queue();
+			} else {
+				channel.sendMessage("La mise à jour à échoué!").queue();
+			}
+		} else if (args.length == 2) {
+			VersionType versionType = VersionType.from(args[0]);
+			if (versionType == null) {
+				System.err.println("Cette version est inconnue!");
+				return;
+			}
+
+			Boolean enable_changelogs_message = args[1].equalsIgnoreCase("true") ? true : false;
+
+			channel.sendMessage("Lancement de la mise à jour du jeu (" + versionType.getName() + ") en cours...").queue();
+			if (UpdateManager.updateGame(versionType, enable_changelogs_message)) {
+				channel.sendMessage("Mise à jour terminé!").queue();
+			} else {
+				channel.sendMessage("La mise à jour à échoué!").queue();
+			}
+
+			channel.sendMessage("Lancement de la mise à jour du serveur (" + versionType.getName() + ") en cours...").queue();
+			if (UpdateManager.updateServer(versionType, enable_changelogs_message)) {
+				channel.sendMessage("Mise à jour terminé!").queue();
+			} else {
+				channel.sendMessage("La mise à jour à échoué!").queue();
 			}
 		}
 	}
 
 	@Override
 	public String getCommand() {
-		return "update";
+		return "updateall";
 	}
 
 	@Override
 	public String getDescription() {
-		return "Vous permet de mettre en ligne une nouvelle mise � jour du jeu!";
+		return "Vous permet de mettre en ligne une nouvelle mise à jour du jeu!";
 	}
 
 }

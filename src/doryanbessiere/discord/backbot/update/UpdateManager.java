@@ -5,15 +5,15 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
+import java.sql.Date;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map.Entry;
@@ -23,12 +23,18 @@ import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonIOException;
+import com.google.gson.JsonSyntaxException;
+
 import doryan.mbd.builder.MavenBuilderAPI;
 import doryan.mbd.builder.MavenLogs;
 import doryan.mbd.download.DownloadInfo;
 import doryan.mbd.github.GithubAPI;
 import doryanbessiere.discord.backbot.Backbot;
 import doryanbessiere.discord.backbot.version.VersionType;
+import doryanbessiere.isotopestudio.api.changelogs.ChangeLogsObject;
 import doryanbessiere.isotopestudio.api.updater.FileFilesUpdate;
 import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.MessageBuilder;
@@ -40,7 +46,7 @@ import net.dv8tion.jda.core.entities.TextChannel;
  */
 public class UpdateManager {
 
-	public static boolean updateGame(VersionType versionType) {
+	public static boolean updateGame(VersionType versionType, boolean enable_changelogs_message) {
 		TextChannel channel = Backbot.getDiscordbot().getTextChannel();
 		if (GithubAPI.getCacheDirectory().exists())
 			try {
@@ -113,7 +119,7 @@ public class UpdateManager {
 					}, arguments)) {
 						File latest_directory = new File(
 								Backbot.getConfig().getProperty("update.latest." + versionType.getName()));
-						
+
 						channel.sendMessage("```[INFO] Build success !```").queue();
 
 						channel.sendMessage("```[INFO] Recovery of current game files !```").queue();
@@ -141,9 +147,9 @@ public class UpdateManager {
 
 						File files_update_file = new File(latest_directory.getParent(), "files.update");
 						FileFilesUpdate fileFilesUpdate = null;
-						
+
 						if (files_update_file.exists()) {
-							System.out.println(files_update_file.getPath()+"="+files_update_file.length());
+							System.out.println(files_update_file.getPath() + "=" + files_update_file.length());
 							fileFilesUpdate = new FileFilesUpdate(files_update_file);
 
 							if (!fileFilesUpdate.read()) {
@@ -173,11 +179,11 @@ public class UpdateManager {
 									update_logs.add(file + " has been added.");
 								}
 							}
-							
+
 							if (files_update_file.exists())
 								files_update_file.delete();
 							files_update_file.createNewFile();
-							
+
 							if (!fileFilesUpdate.save()) {
 								channel.sendMessage("```[ERROR] files.update cannot be saved!```").queue();
 								return false;
@@ -223,62 +229,16 @@ public class UpdateManager {
 						FileUtils.copyDirectoryToDirectory(new File(game_content_directory, "datas"), latest_directory);
 						FileUtils.copyFileToDirectory(new File(game_content_directory, "changelogs.log"),
 								latest_directory);
-						
+
 						File changelogs_file = new File(game_content_directory, "changelogs.log");
-						HashMap<String, ArrayList<String>> logs = null;
-						if (changelogs_file.length() != 0) {
-							if (changelogs_file.exists()) {
-								logs = new HashMap<String, ArrayList<String>>();
-								BufferedReader input = new BufferedReader(new InputStreamReader(
-										new FileInputStream(changelogs_file), Charset.forName("UTF-8")));
-								String log = null;
-								String target_title = null;
-								while ((log = input.readLine()) != null) {
-									if (log.endsWith(":")) {
-										target_title = log;
-										logs.put(target_title, new ArrayList<String>());
-									} else {
-										if (target_title != null) {
-											logs.get(target_title).add(log);
-										}
-									}
-								}
-								input.close();
-							} else {
-								channel.sendMessage("```" + changelogs_file.getParent() + " not found```").queue();
-							}
+
+						if (changelogs_file.exists() && enable_changelogs_message) {
+							changelogs(changelogs_file, version);
 						}
 
-						if (logs != null) {
-							TextChannel changelogs_channel = Backbot.getDiscordbot().getJDA()
-									.getTextChannelById(662833381280710689L);
+						Backbot.getIsotopeStudioDatabase().setString(versionType.getTableSQL(), "name", "backdoor",
+								"version", version);
 
-							EmbedBuilder eb = new EmbedBuilder();
-							eb.setColor(new Color(0x353535));
-							eb.setThumbnail(
-									"https://media.discordapp.net/attachments/699234758374457364/699274451048726588/Isotope_logo_wb.png");
-							eb.setTitle(version, null);
-							eb.setDescription(new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.FRENCH)
-									.format(System.currentTimeMillis()));
-							eb.addBlankField(false);
-							for (Entry<String, ArrayList<String>> entries : logs.entrySet()) {
-								String title = entries.getKey();
-								String content = "";
-								for (String log : entries.getValue()) {
-									content += content == "" ? log : "\n" + log;
-								}
-								eb.addField(title, content, false);
-								eb.addBlankField(false);
-							}
-							eb.setFooter("Backdoor, produit par IsotopeStudio",
-									"https://cdn.discordapp.com/attachments/489417878861512704/700847654359269508/Logo_Backdoor.png");
-
-							changelogs_channel.sendMessage("@everyone").queue();
-							changelogs_channel.sendMessage(eb.build()).queue();
-						}
-
-						Backbot.getDatabase().setString(versionType.getTableSQL(), "name", "backdoor", "version",
-								version);
 						update_logs_writer.close();
 						channel.sendFile(update_logs_file,
 								new MessageBuilder().append("```" + update_logs_file.getName() + "```").build())
@@ -296,6 +256,166 @@ public class UpdateManager {
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+				update_logs_writer.close();
+			} catch (XmlPullParserException e) {
+				e.printStackTrace();
+			}
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
+
+	private static void changelogs(File changelogs_file, String version)
+			throws JsonSyntaxException, JsonIOException, FileNotFoundException {
+		try {
+			Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").create();
+			ChangeLogsObject changelogs = gson.fromJson(
+					new InputStreamReader(new FileInputStream(changelogs_file), Charset.forName("UTF-8")),
+					ChangeLogsObject.class);
+			changelogs.setDate(System.currentTimeMillis());
+			changelogs.setVersion(version);
+
+			String json = changelogs.toJson().replace("\"", "\\" + "\"").replace("'", "\\" + "'");
+			Backbot.getBackdoorDatabase().create("changelogs", "json", json);
+
+			TextChannel changelogs_channel = Backbot.getDiscordbot().getJDA().getTextChannelById(662833381280710689L);
+
+			EmbedBuilder eb = new EmbedBuilder();
+			eb.setColor(new Color(0x353535));
+			eb.setThumbnail(
+					"https://media.discordapp.net/attachments/699234758374457364/699274451048726588/Isotope_logo_wb.png");
+
+			eb.setTitle(changelogs.getTitle(), null);
+			eb.setDescription(changelogs.getSubtitle());
+			eb.addField(
+					changelogs.getVersion() + " - "
+							+ new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.FRENCH).format(changelogs.getDate()),
+					"", false);
+			eb.addBlankField(false);
+			for (Entry<String, ArrayList<String>> entries : changelogs.getContents().entrySet()) {
+				String title = entries.getKey();
+				String content = "";
+				for (String log : entries.getValue()) {
+					log = "  - "+log;
+					content += content == "" ? log : "\n" + log;
+				}
+				eb.addField(title, content, false);
+				eb.addBlankField(false);
+			}
+			eb.setFooter("Backdoor, produit par IsotopeStudio",
+					"https://cdn.discordapp.com/attachments/489417878861512704/700847654359269508/Logo_Backdoor.png");
+
+			changelogs_channel.sendMessage("@everyone").queue();
+			changelogs_channel.sendMessage(eb.build()).queue();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public static boolean updateServer(VersionType versionType, boolean enable_changelogs_message) {
+		TextChannel channel = Backbot.getDiscordbot().getTextChannel();
+		if (GithubAPI.getCacheDirectory().exists())
+			try {
+				FileUtils.deleteDirectory(GithubAPI.getCacheDirectory());
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+
+		GithubAPI githubAPI = new GithubAPI(Backbot.getConfig().getProperty("github.username"),
+				Backbot.getConfig().getProperty("github.token"));
+		try {
+			DownloadInfo download_info = new DownloadInfo() {
+				@Override
+				public void start() {
+					channel.sendMessage("```[INFO] Downloading source code...```").queue();
+				}
+
+				@Override
+				public void finish() {
+					channel.sendMessage("```[INFO] Downloading source code finish.```").queue();
+				}
+
+				@Override
+				public void download() {
+				}
+			};
+			githubAPI.download(GithubAPI.getCacheDirectory(), "BackdoorServer",
+					versionType == VersionType.RELEASE ? "master" : versionType.getName(), download_info);
+			channel.sendMessage("```[INFO] Decompressing the project archive...```").queue();
+			File unzip_directory = githubAPI.unzip(download_info.getFile());
+			channel.sendMessage("```[INFO] Decompressing finish```").queue();
+
+			MavenBuilderAPI build = new MavenBuilderAPI(unzip_directory);
+			File update_logs_file = new File(GithubAPI.localDirectory(), "update.logs");
+			if (update_logs_file.exists()) {
+				update_logs_file.delete();
+			}
+			update_logs_file.createNewFile();
+			FileWriter update_logs_writer = new FileWriter(update_logs_file);
+
+			String[] arguments = Backbot.getConfig().getProperty("mavenbuildapi.server.arguments").split(",");
+
+			StringBuilder arguments_string = new StringBuilder();
+			for (String arg : arguments) {
+				arguments_string.append(arg + " ");
+			}
+
+			try {
+				String version = null;
+
+				try {
+					MavenXpp3Reader reader = new MavenXpp3Reader();
+					Model model = reader.read(new FileInputStream(new File(unzip_directory, "pom.xml")));
+					version = model.getVersion();
+
+					channel.sendMessage("```[INFO] Building projects...```").queue();
+					if (build.build(new MavenLogs() {
+						@Override
+						public void log(String log) {
+							try {
+								update_logs_writer.write(log + "\n");
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+						}
+
+						@Override
+						public void error(String log) {
+							try {
+								update_logs_writer.write(log + "\n");
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+						}
+					}, arguments)) {
+						File resources_directory = new File(Backbot.getConfig().getProperty("resources.directory"));
+
+						channel.sendMessage("```[INFO] Build success !```").queue();
+
+						channel.sendMessage("```[INFO] Recovery of current game files !```").queue();
+
+						FileUtils.copyFileToDirectory(new File(unzip_directory, "target/server.jar"),
+								new File(resources_directory, (versionType.getName() + "s") + "/"));
+
+						channel.sendFile(update_logs_file,
+								new MessageBuilder().append("```" + update_logs_file.getName() + "```").build())
+								.queue();
+
+						return true;
+					} else {
+						channel.sendMessage("```[ERROR] Build failed!```").queue();
+						update_logs_writer.close();
+						channel.sendFile(update_logs_file,
+								new MessageBuilder().append("```" + update_logs_file.getName() + "```").build())
+								.queue();
+						return false;
+					}
+				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
 				update_logs_writer.close();
