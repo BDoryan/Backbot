@@ -103,6 +103,7 @@ public class UpdateManager {
 						public void log(String log) {
 							try {
 								update_logs_writer.write(log + "\n");
+								System.out.println("[Maven] "+log);
 							} catch (IOException e) {
 								e.printStackTrace();
 							}
@@ -112,6 +113,7 @@ public class UpdateManager {
 						public void error(String log) {
 							try {
 								update_logs_writer.write(log + "\n");
+								System.err.println("[Maven] "+log);
 							} catch (IOException e) {
 								e.printStackTrace();
 							}
@@ -136,7 +138,7 @@ public class UpdateManager {
 								game_content_directory);
 						FileUtils.copyDirectoryToDirectory(new File(unzip_directory, "target/langs"),
 								game_content_directory);
-						FileUtils.copyDirectoryToDirectory(new File(unzip_directory, "target/datas"),
+						FileUtils.copyDirectoryToDirectory(new File(unzip_directory, "target/resources"),
 								game_content_directory);
 						FileUtils.copyFileToDirectory(new File(unzip_directory, "target/changelogs.log"),
 								game_content_directory);
@@ -226,7 +228,7 @@ public class UpdateManager {
 						FileUtils.copyDirectoryToDirectory(new File(game_content_directory, "datapacks"),
 								latest_directory);
 						FileUtils.copyDirectoryToDirectory(new File(game_content_directory, "langs"), latest_directory);
-						FileUtils.copyDirectoryToDirectory(new File(game_content_directory, "datas"), latest_directory);
+						FileUtils.copyDirectoryToDirectory(new File(game_content_directory, "resources"), latest_directory);
 						FileUtils.copyFileToDirectory(new File(game_content_directory, "changelogs.log"),
 								latest_directory);
 
@@ -277,7 +279,7 @@ public class UpdateManager {
 			ChangeLogsObject changelogs = gson.fromJson(
 					new InputStreamReader(new FileInputStream(changelogs_file), Charset.forName("UTF-8")),
 					ChangeLogsObject.class);
-			changelogs.setDate(System.currentTimeMillis());
+			changelogs.setDate(new Date(System.currentTimeMillis()));
 			changelogs.setVersion(version);
 
 			String json = changelogs.toJson().replace("\"", "\\" + "\"").replace("'", "\\" + "'");
