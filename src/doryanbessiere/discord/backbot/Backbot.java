@@ -75,7 +75,7 @@ public class Backbot {
 					config.getProperty("mysql.backdoor.database"),config.getProperty("mysql.username"),config.getProperty("mysql.password"));
 
 			if(isotopestudio.connect() && backdoor.connect()) {
-				discordbot.sendMessage("*YEAAAHHHHH, je suis connecté aux bases de données :sunglasses:*");
+				discordbot.sendMessage("*Ohhh ouii maître, je suis connecté aux bases de données :sunglasses:*");
 			} else {
 				discordbot.sendMessage("*FUCKKKKKKKKK, j'arrive pas à me connecté aux bases de données! :middle_finger:*");
 			}

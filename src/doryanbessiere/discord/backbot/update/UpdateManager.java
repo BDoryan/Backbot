@@ -14,6 +14,7 @@ import java.sql.Date;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map.Entry;
@@ -103,7 +104,7 @@ public class UpdateManager {
 						public void log(String log) {
 							try {
 								update_logs_writer.write(log + "\n");
-								System.out.println("[Maven] "+log);
+								System.out.println("[Maven] " + log);
 							} catch (IOException e) {
 								e.printStackTrace();
 							}
@@ -113,7 +114,7 @@ public class UpdateManager {
 						public void error(String log) {
 							try {
 								update_logs_writer.write(log + "\n");
-								System.err.println("[Maven] "+log);
+								System.err.println("[Maven] " + log);
 							} catch (IOException e) {
 								e.printStackTrace();
 							}
@@ -141,6 +142,8 @@ public class UpdateManager {
 						FileUtils.copyDirectoryToDirectory(new File(unzip_directory, "target/resources"),
 								game_content_directory);
 						FileUtils.copyFileToDirectory(new File(unzip_directory, "target/changelogs.log"),
+								game_content_directory);
+						FileUtils.copyFileToDirectory(new File(unzip_directory, "target/game.properties"),
 								game_content_directory);
 
 						channel.sendMessage("```[INFO] Reviewing Modified Files !```").queue();
@@ -216,6 +219,10 @@ public class UpdateManager {
 							update_logs_writer.write(log + "\n");
 						}
 
+						if (!updateLibrairies(latest_directory, channel, unzip_directory, game_content_directory,
+								update_logs, version))
+							return false;
+
 						channel.sendMessage("```[INFO] Uploading the update...!```").queue();
 
 						if (latest_directory.exists()) {
@@ -228,10 +235,13 @@ public class UpdateManager {
 						FileUtils.copyDirectoryToDirectory(new File(game_content_directory, "datapacks"),
 								latest_directory);
 						FileUtils.copyDirectoryToDirectory(new File(game_content_directory, "langs"), latest_directory);
-						FileUtils.copyDirectoryToDirectory(new File(game_content_directory, "resources"), latest_directory);
+						FileUtils.copyDirectoryToDirectory(new File(game_content_directory, "resources"),
+								latest_directory);
 						FileUtils.copyFileToDirectory(new File(game_content_directory, "changelogs.log"),
 								latest_directory);
-
+						FileUtils.copyFileToDirectory(new File(game_content_directory, "game.properties"),
+								latest_directory);
+						
 						File changelogs_file = new File(game_content_directory, "changelogs.log");
 
 						if (changelogs_file.exists() && enable_changelogs_message) {
@@ -272,6 +282,151 @@ public class UpdateManager {
 		return false;
 	}
 
+	private static boolean updateLibrairies(File latest_directory, TextChannel channel, File unzip_directory,
+			File game_content_directory, ArrayList<String> update_logs, String version) throws IOException {
+		
+		FileUtils.copyDirectoryToDirectory(new File(unzip_directory, "target/libs"), game_content_directory);
+		/*
+		 * windows: 
+		 * {x64}: 
+		 * - [librairies] (peut contenir des librairies de x86) 
+		 * {x86}: -
+		 * [librairies]
+		 * 
+		 * macsos: - [librairies]
+		 * 
+		 * linux: {x64}: - [librairies] {x86}: - [librairies] {arm64}: - [librairies]
+		 * {armhf}: - [librairies] {ppc64le}: - [librairies]
+		 * 
+		 */
+
+		File game_content_libs_directory = new File(game_content_directory, "libs");
+
+		HashMap<String, String[]> systems = new HashMap<>();
+		systems.put("windows", new String[] { "64", "86" });
+		systems.put("linux", new String[] { "64", "86", "arm64", "armhf", "ppc64le" });
+		systems.put("macos", new String[] { "64", "86" });
+
+		for (Entry<String, String[]> system : systems.entrySet()) {
+			File parent = new File(game_content_directory, "librairies/"+system.getKey());
+			if (!parent.exists())
+				parent.mkdirs();
+			
+			for (String children : system.getValue()) {
+				channel.sendMessage("`Updating operating system librairies : " + system.getKey() + " ["
+						+ children + "]`").queue();
+				File children_directory = new File(parent, children);
+				if (!children_directory.exists())
+					children_directory.mkdirs();
+
+				File librairies_destination = new File(children_directory, "latest");
+
+				if (!librairies_destination.exists())
+					librairies_destination.mkdirs();
+
+				for (File library : game_content_libs_directory.listFiles()) {
+					String library_name = library.getName();
+					if (library_name.contains("android") || library_name.contains("ios"))
+						continue;
+
+					if (library_name.contains(system.getKey())) {
+						boolean contains_type = false;
+						for (String types : system.getValue()) {
+							if (library_name.contains(types)) {
+								contains_type = true;
+								break;
+							}
+						}
+
+						if (!contains_type)
+							FileUtils.copyFileToDirectory(library, librairies_destination);
+
+						if (library_name.contains(children))
+							FileUtils.copyFileToDirectory(library, librairies_destination);
+					}
+					
+					boolean contains_os = false;
+					for (String types : systems.keySet()) {
+						if (library_name.contains(types)) {
+							contains_os = true;
+							break;
+						}
+					}
+					
+					if(!contains_os)
+						FileUtils.copyFileToDirectory(library, librairies_destination);
+				}
+
+				File latest_librairies_directory = new File(latest_directory.getParent()+"/librairies/"+system.getKey(), children);
+				latest_librairies_directory.mkdirs();
+
+				File files_update_file = new File(latest_librairies_directory, "files.update");
+				FileFilesUpdate fileFilesUpdate = null;
+
+				if (files_update_file.exists()) {
+					System.out.println(files_update_file.getPath() + "=" + files_update_file.length());
+					fileFilesUpdate = new FileFilesUpdate(files_update_file);
+
+					if (!fileFilesUpdate.read()) {
+						channel.sendMessage("```[ERROR] files.update cannot be read!```").queue();
+						return false;
+					}
+
+					List<String> last_version_files = search(latest_librairies_directory, latest_librairies_directory);
+					List<String> new_version_files = search(librairies_destination, librairies_destination);
+
+					for (String file : last_version_files) {
+						if (!new_version_files.contains(file)) {
+							fileFilesUpdate.removeFile(file);
+							update_logs.add(file + " has been removed.");
+						} else {
+							if (!FileUtils.contentEquals(new File(latest_librairies_directory, file),
+									new File(librairies_destination, file))) {
+								fileFilesUpdate.setFile(file, version);
+								update_logs.add(file + " has been changed.");
+							}
+						}
+					}
+
+					for (String file : new_version_files) {
+						if (!last_version_files.contains(file)) {
+							fileFilesUpdate.addFile(file, version);
+							update_logs.add(file + " has been added.");
+						}
+					}
+
+					if (files_update_file.exists())
+						files_update_file.delete();
+
+					files_update_file.createNewFile();
+
+					if (!fileFilesUpdate.save()) {
+						channel.sendMessage("```[ERROR] files.update cannot be saved!```").queue();
+						return false;
+					}
+				} else {
+					fileFilesUpdate = new FileFilesUpdate(files_update_file);
+
+					List<String> new_version_files = search(librairies_destination, librairies_destination);
+					for (String file : new_version_files) {
+						fileFilesUpdate.addFile(file, version);
+						update_logs.add(file + " has been implemented!");
+					}
+
+					if (!fileFilesUpdate.save()) {
+						channel.sendMessage("```[ERROR] files.update cannot be saved!```").queue();
+						return false;
+					}
+				}
+				
+				FileUtils.copyDirectoryToDirectory(librairies_destination,
+						latest_librairies_directory);
+			}
+		}
+
+		return true;
+	}
+
 	private static void changelogs(File changelogs_file, String version)
 			throws JsonSyntaxException, JsonIOException, FileNotFoundException {
 		try {
@@ -303,7 +458,7 @@ public class UpdateManager {
 				String title = entries.getKey();
 				String content = "";
 				for (String log : entries.getValue()) {
-					log = "  - "+log;
+					log = "  - " + log;
 					content += content == "" ? log : "\n" + log;
 				}
 				eb.addField(title, content, false);
