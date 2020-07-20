@@ -215,13 +215,14 @@ public class UpdateManager {
 						}
 						update_logs_writer.write("\n");
 						update_logs_writer.write("## Update Logs ##\n");
-						for (String log : update_logs) {
-							update_logs_writer.write(log + "\n");
-						}
 
 						if (!updateLibrairies(latest_directory, channel, unzip_directory, game_content_directory,
 								update_logs, version))
 							return false;
+						
+						for (String log : update_logs) {
+							update_logs_writer.write(log + "\n");
+						}
 
 						channel.sendMessage("```[INFO] Uploading the update...!```").queue();
 
@@ -313,6 +314,9 @@ public class UpdateManager {
 				parent.mkdirs();
 			
 			for (String children : system.getValue()) {
+				update_logs.add("");
+				update_logs.add("## "+system.getKey()+"/"+children+" Update Logs ##");
+				
 				channel.sendMessage("`Updating operating system librairies : " + system.getKey() + " ["
 						+ children + "]`").queue();
 				File children_directory = new File(parent, children);
@@ -372,7 +376,7 @@ public class UpdateManager {
 						return false;
 					}
 
-					List<String> last_version_files = search(latest_librairies_directory, latest_librairies_directory);
+					List<String> last_version_files = search(new File(latest_librairies_directory, "latest"), new File(latest_librairies_directory, "latest"));
 					List<String> new_version_files = search(librairies_destination, librairies_destination);
 
 					for (String file : last_version_files) {
@@ -380,11 +384,18 @@ public class UpdateManager {
 							fileFilesUpdate.removeFile(file);
 							update_logs.add(file + " has been removed.");
 						} else {
+							/*
+							 * Je n'utilise pas cette fonctionnalité car elle ne fonctionne pas pour les fichiers '.jar'
+							 * De plus les fichiers concerner change de nom lors d'une mise à jour donc cela ne sert à rien
+							 * de verifier des fichiers qui existerons plus par la suite.
+							 */
+							/*
 							if (!FileUtils.contentEquals(new File(latest_librairies_directory, file),
 									new File(librairies_destination, file))) {
 								fileFilesUpdate.setFile(file, version);
 								update_logs.add(file + " has been changed.");
 							}
+							*/
 						}
 					}
 
