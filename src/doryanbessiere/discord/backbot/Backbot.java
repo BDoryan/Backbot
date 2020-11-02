@@ -2,7 +2,6 @@ package doryanbessiere.discord.backbot;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Properties;
 
@@ -12,9 +11,8 @@ import doryanbessiere.discord.backbot.discord.DiscordBot;
 import doryanbessiere.isotopestudio.api.IsotopeStudioAPI;
 import doryanbessiere.isotopestudio.api.mysql.SQL;
 import doryanbessiere.isotopestudio.api.mysql.SQLDatabase;
-import doryanbessiere.isotopestudio.api.mysql.SQLDatabase;
 import doryanbessiere.isotopestudio.commons.LocalDirectory;
-import net.dv8tion.jda.core.exceptions.RateLimitedException;
+import net.dv8tion.jda.api.exceptions.RateLimitedException;
 
 /**
  * @author BESSIERE Doryan

@@ -7,8 +7,8 @@ import java.util.List;
 import doryanbessiere.discord.backbot.Backbot;
 import doryanbessiere.discord.backbot.discord.DiscordBot;
 import doryanbessiere.discord.backbot.discord.command.ICommand;
-import net.dv8tion.jda.core.entities.Message;
-import net.dv8tion.jda.core.entities.TextChannel;
+import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.TextChannel;
 
 /**
  * @author BESSIERE Doryan
@@ -38,7 +38,7 @@ public class ClearCommand implements ICommand {
 				List<Message> messages = channel.getHistory().retrievePast(50).complete();
 				if(messages.size() == 0)break;
 
-				messages.removeIf(m -> m.getCreationTime().isBefore(twoWeeksAgo));
+				messages.removeIf(m -> m.getTimeCreated().isBefore(twoWeeksAgo));
 
 				if (messages.isEmpty()) {
 					isWorking = false;

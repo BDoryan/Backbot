@@ -1,11 +1,9 @@
 package doryanbessiere.discord.backbot.update;
 
 import java.awt.Color;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -37,9 +35,9 @@ import doryanbessiere.discord.backbot.Backbot;
 import doryanbessiere.discord.backbot.version.VersionType;
 import doryanbessiere.isotopestudio.api.changelogs.ChangeLogsObject;
 import doryanbessiere.isotopestudio.api.updater.FileFilesUpdate;
-import net.dv8tion.jda.core.EmbedBuilder;
-import net.dv8tion.jda.core.MessageBuilder;
-import net.dv8tion.jda.core.entities.TextChannel;
+import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.MessageBuilder;
+import net.dv8tion.jda.api.entities.TextChannel;
 
 /**
  * @author BESSIERE Doryan
@@ -253,17 +251,13 @@ public class UpdateManager {
 								"version", version);
 
 						update_logs_writer.close();
-						channel.sendFile(update_logs_file,
-								new MessageBuilder().append("```" + update_logs_file.getName() + "```").build())
-								.queue();
+						channel.sendFile(update_logs_file, "```" + update_logs_file.getName() + "```").queue();
 
 						return true;
 					} else {
 						channel.sendMessage("```[ERROR] Build failed!```").queue();
 						update_logs_writer.close();
-						channel.sendFile(update_logs_file,
-								new MessageBuilder().append("```" + update_logs_file.getName() + "```").build())
-								.queue();
+						channel.sendFile(update_logs_file, "```" + update_logs_file.getName() + "```").queue();
 						return false;
 					}
 				} catch (InterruptedException e) {
@@ -432,6 +426,17 @@ public class UpdateManager {
 				
 				FileUtils.copyDirectoryToDirectory(librairies_destination,
 						latest_librairies_directory);
+				
+				for(File file : new File(latest_librairies_directory, "latest").listFiles()) {
+					System.out.println("Checking: " +file.getPath());
+					if(!fileFilesUpdate.getFiles().containsKey(file.getPath().substring(file.getPath().lastIndexOf("/")))){
+						if(!file.delete()) {
+							System.out.println(file.getPath()+" cannot be deleted!");
+						} else {
+							System.out.println(file.getPath()+" deleted!");
+						}
+					}
+				}
 			}
 		}
 
@@ -570,17 +575,13 @@ public class UpdateManager {
 						FileUtils.copyFileToDirectory(new File(unzip_directory, "target/server.jar"),
 								new File(resources_directory, (versionType.getName() + "s") + "/"));
 
-						channel.sendFile(update_logs_file,
-								new MessageBuilder().append("```" + update_logs_file.getName() + "```").build())
-								.queue();
+						channel.sendFile(update_logs_file, "```" + update_logs_file.getName() + "```").queue();
 
 						return true;
 					} else {
 						channel.sendMessage("```[ERROR] Build failed!```").queue();
 						update_logs_writer.close();
-						channel.sendFile(update_logs_file,
-								new MessageBuilder().append("```" + update_logs_file.getName() + "```").build())
-								.queue();
+						channel.sendFile(update_logs_file, "```" + update_logs_file.getName() + "```").queue();
 						return false;
 					}
 				} catch (InterruptedException e) {
