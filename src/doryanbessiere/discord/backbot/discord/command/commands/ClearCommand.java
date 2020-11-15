@@ -11,8 +11,8 @@ import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.TextChannel;
 
 /**
- * @author BESSIERE Doryan
- * @github https://www.github.com/DoryanBessiere/
+ * @author BDoryan
+ * @github https://www.github.com/BDoryan/
  */
 public class ClearCommand implements ICommand {
 

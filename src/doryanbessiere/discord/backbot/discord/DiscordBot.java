@@ -13,8 +13,8 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.requests.restaction.MessageAction;
 
 /**
- * @author BESSIERE Doryan
- * @github https://www.github.com/DoryanBessiere/
+ * @author BDoryan
+ * @github https://www.github.com/BDoryan/
  */
 public class DiscordBot {
 
@@ -22,11 +22,15 @@ public class DiscordBot {
 	private JDA jda;
 
 	public DiscordBot(String token, long channel)
-			throws LoginException, IllegalArgumentException, RateLimitedException, InterruptedException {
+			throws LoginException, IllegalArgumentException, RateLimitedException {
 		this.channel = channel;
 
 		jda = JDABuilder.createDefault(token).build();
-		jda.awaitReady();
+		try {
+			this.jda.awaitReady();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 		System.out.println("JDA ready");
 		jda.addEventListener(new ListenerAdapter() {
 			@Override
@@ -45,6 +49,11 @@ public class DiscordBot {
 	}
 
 	public void sendMessage(String message) {
+		try {
+			this.jda.awaitReady();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 		MessageAction action = getTextChannel().sendMessage(message);
 		action.complete();
 	}

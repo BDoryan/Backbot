@@ -15,8 +15,8 @@ import doryanbessiere.isotopestudio.commons.LocalDirectory;
 import net.dv8tion.jda.api.exceptions.RateLimitedException;
 
 /**
- * @author BESSIERE Doryan
- * @github https://www.github.com/DoryanBessiere/
+ * @author BDoryan
+ * @github https://www.github.com/BDoryan/
  */
 public class Backbot {
 	
@@ -58,10 +58,6 @@ public class Backbot {
 				System.exit(IsotopeStudioAPI.EXIT_CODE_CRASH);
 				return;
 			} catch (RateLimitedException e) {
-				e.printStackTrace();
-				System.exit(IsotopeStudioAPI.EXIT_CODE_CRASH);
-				return;
-			} catch (InterruptedException e) {
 				e.printStackTrace();
 				System.exit(IsotopeStudioAPI.EXIT_CODE_CRASH);
 				return;
